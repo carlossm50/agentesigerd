@@ -8,6 +8,8 @@ from langchain_community.vectorstores import FAISS
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from api_keys import GEMINI_API_KEY
 from models import GEMINI_FLASH
+from typing import Dict
+from langchain_core.prompts import ChatPromptTemplate
 
 # Instanciamos el modelo de lenguaje de forma global
 llm = ChatGoogleGenerativeAI(
@@ -64,3 +66,52 @@ def inicializar_base_conocimiento():
 
 # Intentar inicializar el recuperador
 retriever = inicializar_base_conocimiento()
+
+# Prompt del sistema para el especialista escolar
+prompt_rag = ChatPromptTemplate(
+    [
+        ("system",
+            """Eres el especialista en procesos de inscripcion escolar del sistema SIGERD.
+            Responde siempre utilizando los conocimientos del contexto pasadas a ti.
+            Si no hay informacion sobre la pregunta en los datos, responde solo 'No lo se'.
+            """
+        ),
+        ("human", "Contexto: {context}\nPregunta del empleado: {input}")
+    ]
+)
+
+document_chain = create_stuff_documents_chain(llm, prompt_rag)
+def busqueda_de_respuestas_RAG(pregunta) -> Dict:
+  # Si no hay documentos o falló la indexación por falta de PDFs
+  if retriever is None:
+      return {
+          "respuesta": "No hay documentos de SIGERD cargados en el sistema.",
+          "citaciones": [],
+          "documentos_encontrados": False
+      }
+
+  documentos_relacionados = retriever.invoke(pregunta)
+  if not documentos_relacionados:
+    return {
+        "respuesta": "No lo sé",
+        "citaciones": [],
+        "documentos_encontrados": False
+    }
+  
+  answer = document_chain.invoke({
+    "input": pregunta,
+    "context": documentos_relacionados
+  })
+  
+  if answer.rstrip(".!?") == "No lo sé" or answer.strip() == "No lo se":
+    return {
+        "respuesta": "No lo sé",
+        "citaciones": [],
+        "documentos_encontrados": False
+    }
+    
+  return {
+    "respuesta": answer,
+    "citaciones": documentos_relacionados,
+    "documentos_encontrados": True
+  }
