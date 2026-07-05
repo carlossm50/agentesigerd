@@ -115,3 +115,29 @@ def busqueda_de_respuestas_RAG(pregunta) -> Dict:
     "citaciones": documentos_relacionados,
     "documentos_encontrados": True
   }
+
+# Ejecución de pruebas aislada (solo corre si ejecutas "python agente.py" directamente)
+if __name__ == "__main__":
+    print("\n--- EJECUTANDO PRUEBAS DEL AGENTE ---")
+    mensajes_de_prueba = [
+        "¿Como puedo acceder al sistema?",
+        "Quiero hacer una busqueda de estudiante",
+        "¿Cómo reinscribo un estudiante?",
+        "¿Como registro un personal nuevo?",
+        "¿Como reinscribo un estudiante?",
+        "¿Quién fue Napoleon Bonaparte?"
+    ]
+
+    for pregunta in mensajes_de_prueba:
+        respuesta_RAG = busqueda_de_respuestas_RAG(pregunta)
+        print(f"PREGUNTA: {pregunta}")
+        print(f"RESPUESTA: {respuesta_RAG['respuesta']}")
+        print(f"DOCUMENTOS ENCONTRADOS: {respuesta_RAG['documentos_encontrados']}")
+        if respuesta_RAG['documentos_encontrados']:
+            for i, citacion in enumerate(respuesta_RAG['citaciones']):
+                print(f"CITACION {i + 1}:")
+                # Manejar metadatos de forma segura por si varía el parser de documentos
+                file_path = citacion.metadata.get('file_path', citacion.metadata.get('source', 'Desconocido'))
+                print(f"Camino del documento: {file_path}")
+                print(f"Contenido: {citacion.page_content.replace('\n', ' ')}")
+                print("-------------------")
