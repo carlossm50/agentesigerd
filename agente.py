@@ -124,7 +124,6 @@ if __name__ == "__main__":
         "Quiero hacer una busqueda de estudiante",
         "¿Cómo reinscribo un estudiante?",
         "¿Como registro un personal nuevo?",
-        "¿Como reinscribo un estudiante?",
         "¿Quién fue Napoleon Bonaparte?"
     ]
 
